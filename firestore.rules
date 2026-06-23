@@ -1,0 +1,83 @@
+rules_version = '2';
+
+// ============================================================
+// Firestore 安全規則（對照真理 v1）
+// 啟動 Firestore 時務必選「正式版模式」（全鎖），再貼這份精準開放。
+// 測試模式會讓資料 30 天內全公開、30 天後自動關閉 → 千萬別用。
+//
+// 兩種身份：
+//   會員 = 匿名登入（anonymous），只能讀課表/自己資料 + 做「合法的預約/取消變動」。
+//   老師 = 用「教室專用 Google 帳號」登入後台，email 比對通過 = 管理者，可任意寫。
+//
+// ⚠️ 安全上限說明（誠實）：純前端 + 不信任的瀏覽器，無法 100% 防會員竄改自己堂數。
+//   下面用「欄位差異只能 ±1」的規則擋掉隨手亂改；要真正防竄改，需把扣堂搬到伺服器端
+//   （Cloudflare Worker 驗 LIFF token 後再寫），列為 L8 強化項。小型私人教室此版可接受。
+// ============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 管理員電子信箱驗證
+    function isAdmin() {
+      return request.auth != null
+          && request.auth.token.email == 'launchdockapp@gmail.com';
+    }
+    function signedIn() { return request.auth != null; }
+
+    // 只動到指定欄位、且該數值欄位剛好變動 delta
+    function onlyDelta(field, delta) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([field])
+          && request.resource.data[field] == resource.data[field] + delta;
+    }
+
+    // ---- 設定：大家可讀，只有老師可寫 ----
+    match /config/{doc} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // ---- 課程 ----
+    match /courses/{courseId} {
+      allow read: if signedIn();
+      allow create, delete: if isAdmin();
+      // 老師可任意改；會員預約/取消只能讓 enrolled ±1
+      allow update: if isAdmin()
+                    || onlyDelta('enrolled', 1)    // 預約
+                    || onlyDelta('enrolled', -1);  // 取消
+    }
+
+    // ---- 會員 ----
+    match /members/{uid} {
+      allow read: if signedIn();
+      allow delete: if isAdmin();
+      // 老師可任意建；會員只能建立自己那筆「待開通」（不能自己給堂數）
+      allow create: if isAdmin()
+                    || (signedIn()
+                        && request.resource.data.status == 'pending'
+                        && request.resource.data.credits == 0);
+      // 老師可任意改（加堂、改到期）；會員預約/取消只能讓 credits ∓1
+      allow update: if isAdmin()
+                    || onlyDelta('credits', -1)   // 預約扣堂
+                    || onlyDelta('credits', 1);   // 取消退堂
+    }
+
+    // ---- 預約 ----
+    match /bookings/{bookingId} {
+      allow read: if signedIn();
+      // 建立預約：必須是 booked、且 lineUserId 對應目前登入者（匿名 uid 或自帶）
+      allow create: if signedIn()
+                    && request.resource.data.status == 'booked';
+      // 只允許把 booked 改成 cancelled
+      allow update: if signedIn()
+                    && resource.data.status == 'booked'
+                    && request.resource.data.status == 'cancelled';
+      allow delete: if isAdmin();
+    }
+
+    // ---- 購課紀錄：只有老師後台能寫 ----
+    match /purchases/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+  }
+}

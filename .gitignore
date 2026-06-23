@@ -1,0 +1,15 @@
+# === 機密：絕不進 repo（放部署平台 Secret） ===
+*serviceAccount*.json
+*service-account*.json
+firebase-adminsdk*.json
+.env
+.env.*
+*.key
+*.pem
+secrets*.json
+.dev.vars
+
+# === 一般 ===
+node_modules/
+.DS_Store
+*.log

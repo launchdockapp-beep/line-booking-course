@@ -18,6 +18,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
 
+  <!-- Firebase SDKs (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="./firebase-init.js"></script>
+
   <style>
     :root {
       --bg: #0f0f11;
@@ -289,6 +295,18 @@
         <span class="status-val" id="cache-status">未就緒</span>
       </div>
     </div>
+
+    <!-- Cloud Connection Test Button -->
+    <div style="margin-top: 1.5rem;">
+      <button id="test-conn-btn" style="width: 100%; padding: 0.85rem 1.5rem; background: linear-gradient(135deg, var(--primary) 0%, #0d9488 100%); border: none; border-radius: 12px; color: #0f0f11; font-weight: 700; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.2s, opacity 0.2s; box-shadow: 0 4px 12px rgba(45, 212, 191, 0.3);">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"></path></svg>
+        雲端連線測試
+      </button>
+      <div id="test-result" style="margin-top: 1rem; font-size: 0.8rem; line-height: 1.4; padding: 0.85rem; border-radius: 12px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); text-align: left; display: none;">
+        <div style="font-weight: 600; margin-bottom: 0.25rem;" id="test-result-title">測試中...</div>
+        <div id="test-result-detail" style="color: var(--text-muted); font-family: monospace; word-break: break-all;"></div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -335,6 +353,55 @@
       document.getElementById('pwa-badge').textContent = '不支援 PWA';
       document.getElementById('cache-status').textContent = '不支援';
     }
+
+    // Cloud connection test execution logic
+    const testBtn = document.getElementById('test-conn-btn');
+    const resultBox = document.getElementById('test-result');
+    const resultTitle = document.getElementById('test-result-title');
+    const resultDetail = document.getElementById('test-result-detail');
+
+    testBtn.addEventListener('click', () => {
+      testBtn.disabled = true;
+      testBtn.style.opacity = '0.6';
+      resultBox.style.display = 'block';
+      resultTitle.textContent = '正在驗證連線...';
+      resultTitle.style.color = '#eab308';
+      resultDetail.textContent = '等待 Firebase 匿名驗證及寫入資料庫...';
+
+      authReady
+        .then((user) => {
+          // Write test document to Firestore config/ping
+          const pingDocRef = db.collection('config').doc('ping');
+          return pingDocRef.set({
+            at: firebase.firestore.FieldValue.serverTimestamp(),
+            by: user.uid
+          }).then(() => {
+            // Read back
+            return pingDocRef.get();
+          });
+        })
+        .then((doc) => {
+          if (doc.exists) {
+            const data = doc.data();
+            const timeStr = data.at ? new Date(data.at.toDate()).toLocaleString() : '未取得伺服器時間 (可能稍後更新)';
+            resultTitle.textContent = '✓ 連線測試成功';
+            resultTitle.style.color = '#2dd4bf';
+            resultDetail.innerHTML = `寫入 UID: <span style="color:var(--text)">${data.by}</span><br>伺服器回傳時間: <span style="color:var(--text)">${timeStr}</span>`;
+          } else {
+            throw new Error('找不到 ping 測試文件');
+          }
+        })
+        .catch((error) => {
+          console.error('Connection test error:', error);
+          resultTitle.textContent = '✕ 連線測試失敗';
+          resultTitle.style.color = '#f43f5e';
+          resultDetail.textContent = error.message || error;
+        })
+        .finally(() => {
+          testBtn.disabled = false;
+          testBtn.style.opacity = '1';
+        });
+    });
   </script>
 </body>
 </html>

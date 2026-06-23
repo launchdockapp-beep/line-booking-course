@@ -17,7 +17,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 管理員電子信箱驗證
+    // 把這裡換成你的「教室專用 Google 帳號」信箱
     function isAdmin() {
       return request.auth != null
           && request.auth.token.email == 'launchdockapp@gmail.com';
@@ -31,9 +31,11 @@ service cloud.firestore {
     }
 
     // ---- 設定：大家可讀，只有老師可寫 ----
+    // 例外：config/ping 開放給任何登入者寫，作為 L1 連線測試通道（無害的丟棄式文件；
+    //       config/app 等其他設定仍只有 admin 能寫）。
     match /config/{doc} {
       allow read: if signedIn();
-      allow write: if isAdmin();
+      allow write: if isAdmin() || (doc == 'ping' && signedIn());
     }
 
     // ---- 課程 ----

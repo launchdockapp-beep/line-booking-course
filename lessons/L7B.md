@@ -4,6 +4,13 @@
 詳細見根目錄 `L7-自動通知-操作手冊.md`（L7-3）。
 
 > ⚠️ 這堂的「service account 簽 JWT(RS256)」是全案最硬一段，最可能要丟給 Claude 幫修。卡住別硬耗。
+> 💡 **建議本課把 agy 切到 Claude Sonnet 4.6**（`/model`）：JWT 簽章判斷吃重，Flash 較易卡。
+
+---
+
+### ▶️ agy 第一步（先確認，未完成即停）
+> 先把下面「設定關卡」輸出給老師，確認：① 已下載 service account 私密金鑰 JSON ② Worker Secret 已設 `FIREBASE_SA`（整段 JSON）、`PROJECT_ID`。
+> 未完成 → **停下**請老師補，不要假設、不要先寫 scheduled 程式。
 
 ---
 

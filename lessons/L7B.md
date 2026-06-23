@@ -9,14 +9,19 @@
 ---
 
 ### ▶️ agy 第一步（先確認，未完成即停）
-> 先把下面「設定關卡」輸出給老師，確認：① 已下載 service account 私密金鑰 JSON ② Worker Secret 已設 `FIREBASE_SA`（整段 JSON）、`PROJECT_ID`。
-> 未完成 → **停下**請老師補，不要假設、不要先寫 scheduled 程式。
+> 先 `wrangler whoami` 確認已登入、且 L7A 的 Worker / wrangler.toml 已存在（這課延用同一個）。再確認老師已下載 service account JSON 並設成 Secret。
+> 任一未完成 → **停下**請老師補，不要假設、不要先寫 scheduled 程式。
 
 ---
 
-### 🧰 設定關卡（老師，課程開始）— service account＋Cron 金鑰
-1. Firebase 專案設定 → 服務帳戶 → 產生新的私密金鑰（下載 JSON）。
-2. Worker Secret 加 `FIREBASE_SA`（整個 JSON 貼成一行）、`PROJECT_ID`。
+### 🧰 設定關卡（老師，課程開始）— service account 金鑰（用 wrangler 設）
+1. Firebase Console → 專案設定（齒輪）→ **「服務帳戶 / Service accounts」** 分頁 → **「產生新的私密金鑰」** → 下載 JSON（這步只能在 Console，無 CLI）。
+2. 用 wrangler 設成 Secret（值由老師貼，**不進 repo**）：
+   ```
+   wrangler secret put FIREBASE_SA    # 貼整段 service account JSON
+   wrangler secret put PROJECT_ID     # 你的 Firebase 專案 ID
+   ```
+> Dashboard 備援：Worker → Settings → Variables and Secrets。
 
 ### 👩‍💻 給 agy 的指令（這一課）
 ```
@@ -25,11 +30,17 @@
 2) Firestore REST 讀 members(status==active)。
 3) 算到期天數(台灣時區 UTC+8)：14/7/3/0 天 → push 提醒；<0 且 credits>0 → PATCH credits=0。
 4) 加 GET /?run=1&secret=PUSH_SECRET 手動觸發同邏輯方便測。
-逐筆容錯、金鑰只從 Secret 取。做完停下並告訴我怎麼用 /?run=1 測。
+逐筆容錯、金鑰只從 env Secret 取。完成後 `wrangler deploy` 套用，並告訴我怎麼用 /?run=1 測。
 ```
 
-### 🧰 設定關卡（本課末）— 設 Cron
-Worker → Settings → Triggers → **用「Cron expression」分頁** 填 `0 0 * * *`（UTC 00:00 = 台灣 08:00）。Cron 只在下個觸發點才跑，當場用 `/?run=1` 驗。
+### 🧰 設定關卡（本課末）— 設 Cron（寫進 wrangler.toml）
+在 `wrangler.toml` 加：
+```
+[triggers]
+crons = ["0 0 * * *"]    # UTC 00:00 = 台灣 08:00
+```
+再 `wrangler deploy` 套用。Cron 只在下個觸發點才跑，當場用 `/?run=1&secret=...` 驗。
+> Dashboard 備援：Worker → Settings → Triggers →「Cron expression」分頁填 `0 0 * * *`。
 
 ### ✅ 驗收
 - 會員到期日設「3 天後」→ 開 `/?run=1&secret=...` → LINE 收到「剩 3 天」。

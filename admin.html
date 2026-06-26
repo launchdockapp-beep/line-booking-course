@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>課程管理後台 — LINE 課程預約系統</title>
+  <meta name="robots" content="noindex">
+
+  <!-- Firebase SDKs (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="./firebase-init.js"></script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0f0f11;
+      --surface: #18181b;
+      --surface2: #27272a;
+      --border: rgba(255,255,255,0.08);
+      --text: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --primary: #2dd4bf;
+      --primary-dim: rgba(45,212,191,0.15);
+      --danger: #f43f5e;
+      --success: #22c55e;
+      --warning: #eab308;
+      --font: 'Outfit', 'Noto Sans TC', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+    }
+
+    /* ── Auth Gate ── */
+    #auth-gate {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .auth-card {
+      background: rgba(24,24,27,0.8);
+      border: 1px solid rgba(45,212,191,0.2);
+      border-radius: 24px;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      backdrop-filter: blur(16px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    .auth-icon {
+      width: 64px; height: 64px;
+      background: var(--primary-dim);
+      border: 1px solid rgba(45,212,191,0.3);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1.5rem;
+      font-size: 1.75rem;
+    }
+    .auth-card h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .auth-card p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.75rem; }
+    #auth-error { display: none; color: var(--danger); font-size: 0.8rem; margin-bottom: 1rem; padding: 0.6rem 0.9rem; background: rgba(244,63,94,0.1); border-radius: 8px; }
+
+    /* ── App Shell ── */
+    #app { display: none; }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .header-title { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .header-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 8px var(--primary); }
+    .admin-email { font-size: 0.75rem; color: var(--text-muted); background: var(--surface2); padding: 0.3rem 0.7rem; border-radius: 6px; }
+    #logout-btn {
+      background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.2);
+      color: var(--danger); border-radius: 8px; padding: 0.35rem 0.75rem;
+      font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: var(--font);
+    }
+
+    main { padding: 2rem 1.5rem; max-width: 900px; margin: 0 auto; }
+    .section-title {
+      font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem;
+      display: flex; align-items: center; gap: 8px; color: var(--text);
+    }
+    .section-title::before {
+      content: ''; display: block; width: 3px; height: 1.1rem;
+      background: var(--primary); border-radius: 2px;
+    }
+
+    /* ── CSV Import Section ── */
+    .import-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .import-card label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+    textarea#csv-input {
+      width: 100%; min-height: 160px; resize: vertical;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.75rem 1rem;
+      color: var(--text); font-family: monospace; font-size: 0.8rem;
+      outline: none; transition: border-color 0.2s;
+    }
+    textarea#csv-input:focus { border-color: var(--primary); }
+    .import-actions { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
+    .btn {
+      padding: 0.65rem 1.25rem; border-radius: 10px; font-family: var(--font);
+      font-size: 0.875rem; font-weight: 600; cursor: pointer; border: none;
+      display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.2s;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); color: #0f0f11; }
+    .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    #import-log {
+      margin-top: 1rem; font-size: 0.8rem; line-height: 1.6;
+      padding: 0.75rem 1rem; border-radius: 10px;
+      background: var(--surface2); border: 1px solid var(--border);
+      display: none; font-family: monospace; white-space: pre-wrap;
+      max-height: 200px; overflow-y: auto;
+    }
+
+    /* ── Course List ── */
+    .courses-grid { display: grid; gap: 0.75rem; }
+    .course-row {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 0.9rem 1.1rem;
+      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    }
+    .course-row.cancelled { opacity: 0.45; }
+    .course-date { font-size: 0.75rem; color: var(--text-muted); min-width: 100px; }
+    .course-title { font-weight: 600; flex: 1; min-width: 120px; }
+    .course-instructor { font-size: 0.8rem; color: var(--text-muted); }
+    .course-seats {
+      font-size: 0.8rem; font-weight: 600; padding: 0.2rem 0.6rem;
+      border-radius: 6px; background: var(--primary-dim); color: var(--primary);
+    }
+    .course-seats.full { background: rgba(244,63,94,0.1); color: var(--danger); }
+    .status-badge {
+      font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.55rem;
+      border-radius: 99px; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .status-open { background: rgba(34,197,94,0.15); color: var(--success); }
+    .status-cancelled { background: rgba(244,63,94,0.1); color: var(--danger); }
+    .empty-state { text-align: center; color: var(--text-muted); padding: 3rem 1rem; font-size: 0.9rem; }
+    .loading { text-align: center; color: var(--text-muted); padding: 2rem; }
+  </style>
+</head>
+<body>
+
+<!-- ── Auth Gate ── -->
+<div id="auth-gate">
+  <div class="auth-card">
+    <div class="auth-icon">🔐</div>
+    <h1>課程管理後台</h1>
+    <p>請使用教室管理員帳號登入</p>
+    <div id="auth-error"></div>
+    <button class="btn btn-primary" id="google-login-btn" style="width:100%; justify-content:center;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-6.887 4.114-4.68 0-8.5-3.87-8.5-8.5s3.82-8.5 8.5-8.5c2.14 0 3.99.775 5.415 2.1l3.225-3.225C18.89 1.62 15.825 0 12.24 0 5.58 0 0 5.58 0 12.24s5.58 12.24 12.24 12.24c6.96 0 11.57-4.89 11.57-11.79 0-.795-.085-1.56-.24-2.4H12.24z"/></svg>
+      使用 Google 帳號登入
+    </button>
+  </div>
+</div>
+
+<!-- ── App Shell ── -->
+<div id="app">
+  <header>
+    <div class="header-title">
+      <div class="dot"></div>
+      課程管理後台
+    </div>
+    <div style="display:flex; align-items:center; gap:0.75rem;">
+      <span class="admin-email" id="admin-email-display"></span>
+      <button id="logout-btn">登出</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- CSV Import -->
+    <p class="section-title">匯入課表 CSV</p>
+    <div class="import-card">
+      <label for="csv-input">貼上 CSV 內容（格式：date,time,title,instructor,capacity）</label>
+      <textarea id="csv-input" placeholder="date,time,title,instructor,capacity
+2026-07-01,14:30,椅子瑜伽,小柔老師,20
+2026-07-02,19:30,療癒陰瑜伽,小柔老師,20"></textarea>
+      <div class="import-actions">
+        <button class="btn btn-primary" id="import-btn">
+          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+          匯入課程
+        </button>
+        <button class="btn btn-ghost" id="clear-btn">清除</button>
+      </div>
+      <div id="import-log"></div>
+    </div>
+
+    <!-- Course List -->
+    <p class="section-title">目前所有課程</p>
+    <div id="courses-list" class="courses-grid">
+      <div class="loading">載入中...</div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const ADMIN_EMAIL = 'launchdockapp@gmail.com';
+
+  // ── DOM refs ──
+  const authGate = document.getElementById('auth-gate');
+  const appShell = document.getElementById('app');
+  const authError = document.getElementById('auth-error');
+  const adminEmailDisplay = document.getElementById('admin-email-display');
+  const importBtn = document.getElementById('import-btn');
+  const clearBtn = document.getElementById('clear-btn');
+  const csvInput = document.getElementById('csv-input');
+  const importLog = document.getElementById('import-log');
+  const coursesList = document.getElementById('courses-list');
+
+  // ── Auth: Listen to state changes ──
+  auth.onAuthStateChanged((user) => {
+    if (user && user.email === ADMIN_EMAIL) {
+      // Admin confirmed
+      authGate.style.display = 'none';
+      appShell.style.display = 'block';
+      adminEmailDisplay.textContent = user.email;
+      loadCourses();
+    } else if (user && user.email !== ADMIN_EMAIL) {
+      // Wrong account
+      showAuthError(`此帳號（${user.email}）沒有管理員權限，請換用 ${ADMIN_EMAIL} 登入。`);
+      auth.signOut();
+    } else {
+      // Not logged in
+      authGate.style.display = 'flex';
+      appShell.style.display = 'none';
+    }
+  });
+
+  function showAuthError(msg) {
+    authError.textContent = msg;
+    authError.style.display = 'block';
+  }
+
+  // ── Google Login ──
+  document.getElementById('google-login-btn').addEventListener('click', () => {
+    authError.style.display = 'none';
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch((err) => {
+      showAuthError('登入失敗：' + err.message);
+    });
+  });
+
+  // ── Logout ──
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    auth.signOut();
+  });
+
+  // ── CSV Import ──
+  importBtn.addEventListener('click', async () => {
+    const raw = csvInput.value.trim();
+    if (!raw) return;
+
+    importBtn.disabled = true;
+    importLog.style.display = 'block';
+    importLog.textContent = '🔄 開始匯入...\n';
+
+    const lines = raw.split('\n').map(l => l.trim()).filter(l => l);
+    // Skip header row
+    const dataLines = lines[0].startsWith('date') ? lines.slice(1) : lines;
+
+    let created = 0, skipped = 0, errors = 0;
+
+    for (const line of dataLines) {
+      const parts = line.split(',').map(p => p.trim());
+      if (parts.length < 5) {
+        importLog.textContent += `⚠ 略過格式不符的行：${line}\n`;
+        errors++;
+        continue;
+      }
+      const [date, time, title, instructor, capacityStr] = parts;
+      const capacity = parseInt(capacityStr, 10);
+
+      if (!date || !time || !title || !instructor || isNaN(capacity)) {
+        importLog.textContent += `⚠ 略過欄位不完整的行：${line}\n`;
+        errors++;
+        continue;
+      }
+
+      // courseId = YYYYMMDD_HHmm（移除 - 與 :）
+      const courseId = date.replace(/-/g, '') + '_' + time.replace(/:/g, '');
+      const docRef = db.collection('courses').doc(courseId);
+
+      try {
+        const snap = await docRef.get();
+        if (snap.exists) {
+          // Already exists — do NOT overwrite enrolled or status
+          await docRef.set({
+            date, time, title, instructor, capacity
+          }, { merge: true });
+          importLog.textContent += `⏭ 已存在，更新資訊（保留 enrolled/status）：${courseId}\n`;
+          skipped++;
+        } else {
+          // New course
+          await docRef.set({
+            date,
+            time,
+            title,
+            instructor,
+            capacity,
+            enrolled: 0,
+            status: 'open'
+          });
+          importLog.textContent += `✓ 新增：${courseId} ${title}\n`;
+          created++;
+        }
+      } catch (e) {
+        importLog.textContent += `✕ 錯誤 (${courseId})：${e.message}\n`;
+        errors++;
+      }
+    }
+
+    importLog.textContent += `\n✅ 完成！新增 ${created} 筆、更新 ${skipped} 筆、錯誤 ${errors} 筆。`;
+    importBtn.disabled = false;
+    loadCourses();
+  });
+
+  clearBtn.addEventListener('click', () => {
+    csvInput.value = '';
+    importLog.style.display = 'none';
+    importLog.textContent = '';
+  });
+
+  // ── Load and display all courses ──
+  async function loadCourses() {
+    coursesList.innerHTML = '<div class="loading">載入中...</div>';
+    try {
+      const snap = await db.collection('courses').orderBy('date').orderBy('time').get();
+      if (snap.empty) {
+        coursesList.innerHTML = '<div class="empty-state">尚無課程資料。請貼上 CSV 匯入課程。</div>';
+        return;
+      }
+
+      coursesList.innerHTML = '';
+      snap.forEach(doc => {
+        const c = doc.data();
+        const remaining = c.capacity - (c.enrolled || 0);
+        const isFull = remaining <= 0;
+        const isCancelled = c.status === 'cancelled';
+
+        const dateObj = new Date(c.date + 'T' + c.time + ':00');
+        const weekday = ['日','一','二','三','四','五','六'][dateObj.getDay()];
+
+        const row = document.createElement('div');
+        row.className = 'course-row' + (isCancelled ? ' cancelled' : '');
+        row.innerHTML = `
+          <div class="course-date">${c.date}（${weekday}）${c.time}</div>
+          <div class="course-title">${c.title}</div>
+          <div class="course-instructor">👩‍🏫 ${c.instructor}</div>
+          <div class="course-seats ${isFull ? 'full' : ''}">
+            ${isFull ? '額滿' : `剩 ${remaining} 位`} / ${c.capacity}
+          </div>
+          <div class="status-badge ${isCancelled ? 'status-cancelled' : 'status-open'}">
+            ${isCancelled ? '停課' : '開放'}
+          </div>
+        `;
+        coursesList.appendChild(row);
+      });
+    } catch (e) {
+      coursesList.innerHTML = `<div class="empty-state" style="color:var(--danger)">載入失敗：${e.message}</div>`;
+    }
+  }
+</script>
+</body>
+</html>

@@ -48,11 +48,10 @@
       font-family: var(--font-sans);
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      overflow: hidden;
       position: relative;
-      padding: 1.5rem;
+      padding: 1.5rem 1rem 3rem;
     }
 
     /* Ambient Background Glows */
@@ -252,13 +251,93 @@
     }
 
     @keyframes pulse {
-      0%, 100% {
-        opacity: 1;
-      }
-      50% {
-        opacity: .5;
-      }
+      0%, 100% { opacity: 1; }
+      50% { opacity: .5; }
     }
+
+    /* ── Weekly Schedule ── */
+    .schedule-section {
+      width: 100%;
+      max-width: 480px;
+      margin-top: 2rem;
+    }
+    .schedule-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .schedule-title::before {
+      content: '';
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: var(--primary);
+      border-radius: 2px;
+    }
+    .course-card {
+      background: rgba(24, 24, 27, 0.7);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 1rem 1.1rem;
+      margin-bottom: 0.65rem;
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: border-color 0.2s;
+    }
+    .course-card:hover { border-color: rgba(45,212,191,0.25); }
+    .course-time-block {
+      text-align: center;
+      min-width: 48px;
+    }
+    .course-time-block .time {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1;
+    }
+    .course-time-block .weekday {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .course-info { flex: 1; }
+    .course-info .name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 2px;
+    }
+    .course-info .instructor {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .course-seats-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.6rem;
+      border-radius: 8px;
+      white-space: nowrap;
+    }
+    .seats-ok { background: rgba(45,212,191,0.12); color: var(--primary); }
+    .seats-low { background: rgba(234,179,8,0.12); color: #eab308; }
+    .seats-full { background: rgba(244,63,94,0.12); color: var(--secondary); }
+    .schedule-empty {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      padding: 2rem 1rem;
+      background: rgba(24,24,27,0.5);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 16px;
+    }
+    .schedule-loading { text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 1.5rem; }
   </style>
 </head>
 <body>
@@ -307,6 +386,12 @@
         <div id="test-result-detail" style="color: var(--text-muted); font-family: monospace; word-break: break-all;"></div>
       </div>
     </div>
+  </div>
+
+  <!-- ── Weekly Schedule Section ── -->
+  <div class="schedule-section">
+    <div class="schedule-title">本週課程</div>
+    <div id="schedule-list"><div class="schedule-loading">🔄 載入課表中...</div></div>
   </div>
 
   <script>
@@ -402,6 +487,74 @@
           testBtn.style.opacity = '1';
         });
     });
+
+    // ── Weekly Course Schedule ──
+    const WEEKDAYS = ['日','一','二','三','四','五','六'];
+
+    function getWeekRange() {
+      const now = new Date();
+      const day = now.getDay(); // 0=Sun
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - ((day + 6) % 7)); // Mon
+      monday.setHours(0,0,0,0);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6); // Sun
+      sunday.setHours(23,59,59,999);
+      const fmt = d => d.toISOString().slice(0,10);
+      return { start: fmt(monday), end: fmt(sunday) };
+    }
+
+    async function loadSchedule() {
+      const list = document.getElementById('schedule-list');
+      try {
+        await authReady;
+        const { start, end } = getWeekRange();
+        const snap = await db.collection('courses')
+          .where('date', '>=', start)
+          .where('date', '<=', end)
+          .where('status', '==', 'open')
+          .orderBy('date')
+          .orderBy('time')
+          .get();
+
+        if (snap.empty) {
+          list.innerHTML = '<div class="schedule-empty">📅 本週尚無課程</div>';
+          return;
+        }
+
+        list.innerHTML = '';
+        snap.forEach(doc => {
+          const c = doc.data();
+          const remaining = c.capacity - (c.enrolled || 0);
+          const dateObj = new Date(c.date + 'T00:00:00');
+          const weekday = WEEKDAYS[dateObj.getDay()];
+
+          let seatsClass = 'seats-ok';
+          let seatsLabel = `剩 ${remaining} 位`;
+          if (remaining <= 0) { seatsClass = 'seats-full'; seatsLabel = '額滿'; }
+          else if (remaining <= 3) { seatsClass = 'seats-low'; }
+
+          const card = document.createElement('div');
+          card.className = 'course-card';
+          card.innerHTML = `
+            <div class="course-time-block">
+              <div class="time">${c.time}</div>
+              <div class="weekday">${c.date.slice(5).replace('-','/')} 週${weekday}</div>
+            </div>
+            <div class="course-info">
+              <div class="name">${c.title}</div>
+              <div class="instructor">👩‍🏫 ${c.instructor}</div>
+            </div>
+            <div class="course-seats-badge ${seatsClass}">${seatsLabel}</div>
+          `;
+          list.appendChild(card);
+        });
+      } catch (e) {
+        list.innerHTML = `<div class="schedule-empty" style="color:var(--secondary)">載入失敗：${e.message}</div>`;
+      }
+    }
+
+    loadSchedule();
   </script>
 </body>
 </html>

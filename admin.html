@@ -240,8 +240,8 @@
       appShell.style.display = 'block';
       adminEmailDisplay.textContent = user.email;
       loadCourses();
-    } else if (user && user.email !== ADMIN_EMAIL) {
-      // Wrong account
+    } else if (user && user.email && user.email !== ADMIN_EMAIL) {
+      // Wrong Google account (not anonymous)
       showAuthError(`此帳號（${user.email}）沒有管理員權限，請換用 ${ADMIN_EMAIL} 登入。`);
       auth.signOut();
     } else {

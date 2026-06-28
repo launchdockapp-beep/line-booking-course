@@ -24,6 +24,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="./firebase-init.js"></script>
 
+  <!-- LIFF SDK (v2) -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
   <style>
     :root {
       --bg: #0f0f11;
@@ -338,6 +341,68 @@
       border-radius: 16px;
     }
     .schedule-loading { text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 1.5rem; }
+
+    /* ── Member Section ── */
+    #member-section { display: none; margin-bottom: 1.25rem; }
+    .member-card {
+      background: rgba(45,212,191,0.06);
+      border: 1px solid rgba(45,212,191,0.2);
+      border-radius: 16px;
+      padding: 1.1rem 1.25rem;
+    }
+    .member-greeting {
+      font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.6rem;
+    }
+    .member-credits-row {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .credits-display { display: flex; align-items: baseline; gap: 4px; }
+    .credits-num { font-size: 2.4rem; font-weight: 700; line-height: 1; }
+    .credits-unit { font-size: 0.9rem; font-weight: 600; }
+    .member-expiry {
+      font-size: 0.72rem; color: var(--text-muted); text-align: right; line-height: 1.5;
+    }
+    .member-expiry strong { color: var(--text); font-size: 0.82rem; }
+    .member-pending {
+      margin-top: 0.6rem; font-size: 0.75rem;
+      color: #eab308; background: rgba(234,179,8,0.1);
+      border-radius: 8px; padding: 0.35rem 0.6rem;
+    }
+    .member-error {
+      font-size: 0.8rem; color: var(--secondary);
+      background: rgba(244,63,94,0.08); border-radius: 12px; padding: 0.75rem 1rem;
+    }
+    /* Register form */
+    .register-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem;
+    }
+    .register-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.25rem; }
+    .register-hint { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 1rem; }
+    .form-group { margin-bottom: 0.75rem; }
+    .form-group label {
+      display: block; font-size: 0.75rem; color: var(--text-muted);
+      margin-bottom: 0.3rem; font-weight: 600;
+    }
+    .form-group input {
+      width: 100%; background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+      padding: 0.6rem 0.85rem; color: var(--text); font-family: var(--font-sans);
+      font-size: 0.9rem; outline: none; transition: border-color 0.2s;
+    }
+    .form-group input:focus { border-color: var(--primary); }
+    .btn-register {
+      width: 100%; padding: 0.7rem; margin-top: 0.25rem;
+      background: linear-gradient(135deg, var(--primary) 0%, #0d9488 100%);
+      border: none; border-radius: 10px; color: #0f0f11;
+      font-weight: 700; font-size: 0.9rem; cursor: pointer;
+      font-family: var(--font-sans);
+    }
+    .btn-register:disabled { opacity: 0.55; cursor: not-allowed; }
+    .reg-error {
+      margin-top: 0.5rem; font-size: 0.78rem; color: var(--secondary);
+      background: rgba(244,63,94,0.08); border-radius: 8px; padding: 0.4rem 0.7rem;
+    }
   </style>
 </head>
 <body>
@@ -363,6 +428,9 @@
 
     <h1>課程預約系統</h1>
     <p class="tagline">舞蹈與瑜珈教室的專屬預約空間。<br>請將此頁面「加入主畫面」以獲得最佳使用體驗。</p>
+
+    <!-- L3: Member Info / Register Form (populated by liff-init.js) -->
+    <div id="member-section"></div>
 
     <div class="status-box">
       <div class="status-row">
@@ -556,5 +624,8 @@
 
     loadSchedule();
   </script>
+
+  <!-- liff-init.js: 載入順序 firebase SDK → firebase-init.js → liff-init.js -->
+  <script src="./liff-init.js"></script>
 </body>
 </html>

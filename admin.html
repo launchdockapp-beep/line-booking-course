@@ -20,17 +20,17 @@
 
   <style>
     :root {
-      --bg: #0f0f11;
-      --surface: #18181b;
-      --surface2: #27272a;
-      --border: rgba(255,255,255,0.08);
+      --bg: #0b0b0e;
+      --surface: #131316;
+      --surface2: #1e1e24;
+      --border: rgba(255,255,255,0.06);
       --text: #f4f4f5;
       --text-muted: #a1a1aa;
       --primary: #2dd4bf;
       --primary-dim: rgba(45,212,191,0.15);
       --danger: #f43f5e;
-      --success: #22c55e;
-      --warning: #eab308;
+      --success: #10b981;
+      --warning: #f59e0b;
       --font: 'Outfit', 'Noto Sans TC', sans-serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -39,6 +39,8 @@
       color: var(--text);
       font-family: var(--font);
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
     /* ── Auth Gate ── */
@@ -50,118 +52,210 @@
       padding: 1.5rem;
     }
     .auth-card {
-      background: rgba(24,24,27,0.8);
-      border: 1px solid rgba(45,212,191,0.2);
+      background: rgba(19, 19, 22, 0.85);
+      border: 1px solid rgba(45,212,191,0.15);
       border-radius: 24px;
       padding: 2.5rem 2rem;
       width: 100%;
-      max-width: 360px;
+      max-width: 380px;
       text-align: center;
-      backdrop-filter: blur(16px);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      backdrop-filter: blur(20px);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
     }
     .auth-icon {
       width: 64px; height: 64px;
       background: var(--primary-dim);
-      border: 1px solid rgba(45,212,191,0.3);
-      border-radius: 16px;
+      border: 1px solid rgba(45,212,191,0.25);
+      border-radius: 18px;
       display: flex; align-items: center; justify-content: center;
       margin: 0 auto 1.5rem;
       font-size: 1.75rem;
     }
-    .auth-card h1 { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.4rem; }
-    .auth-card p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.75rem; }
-    #auth-error { display: none; color: var(--danger); font-size: 0.8rem; margin-bottom: 1rem; padding: 0.6rem 0.9rem; background: rgba(244,63,94,0.1); border-radius: 8px; }
+    .auth-card h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .auth-card p { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.75rem; }
+    #auth-error { display: none; color: var(--danger); font-size: 0.85rem; margin-bottom: 1.25rem; padding: 0.75rem 1rem; background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.15); border-radius: 10px; }
 
     /* ── App Shell ── */
-    #app { display: none; }
+    #app { display: none; flex: 1; display: flex; flex-direction: column; }
     header {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
-      padding: 0 1.5rem;
-      height: 60px;
+      padding: 0 2rem;
+      height: 64px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(12px);
     }
-    .header-title { font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-    .header-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 8px var(--primary); }
-    .admin-email { font-size: 0.75rem; color: var(--text-muted); background: var(--surface2); padding: 0.3rem 0.7rem; border-radius: 6px; }
+    .header-title { font-size: 1.05rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .header-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 10px var(--primary); }
+    .admin-email { font-size: 0.75rem; color: var(--text-muted); background: var(--surface2); padding: 0.35rem 0.75rem; border-radius: 8px; border: 1px solid var(--border); }
     #logout-btn {
-      background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.2);
-      color: var(--danger); border-radius: 8px; padding: 0.35rem 0.75rem;
-      font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: var(--font);
+      background: rgba(244,63,94,0.08); border: 1px solid rgba(244,63,94,0.2);
+      color: var(--danger); border-radius: 8px; padding: 0.4rem 0.85rem;
+      font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background 0.2s;
+    }
+    #logout-btn:hover { background: rgba(244,63,94,0.15); }
+
+    /* ── Navigation Tabs ── */
+    .tabs-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      padding: 0 2rem;
+      gap: 1.5rem;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      background: none; border: none;
+      color: var(--text-muted); font-family: var(--font);
+      font-size: 0.9rem; font-weight: 600; padding: 1rem 0.25rem;
+      cursor: pointer; position: relative; transition: color 0.2s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--primary); }
+    .tab-btn.active::after {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+      height: 2px; background: var(--primary); border-radius: 2px 2px 0 0;
+      box-shadow: 0 -2px 10px var(--primary);
     }
 
-    main { padding: 2rem 1.5rem; max-width: 900px; margin: 0 auto; }
+    main { padding: 2rem; max-width: 1000px; margin: 0 auto; width: 100%; flex: 1; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeIn 0.25s ease-out; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .section-title {
-      font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem;
+      font-size: 1.15rem; font-weight: 700; margin-bottom: 1.25rem;
       display: flex; align-items: center; gap: 8px; color: var(--text);
     }
     .section-title::before {
-      content: ''; display: block; width: 3px; height: 1.1rem;
+      content: ''; display: block; width: 4px; height: 1.15rem;
       background: var(--primary); border-radius: 2px;
     }
 
-    /* ── CSV Import Section ── */
-    .import-card {
+    /* ── Forms and Inputs ── */
+    .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 16px;
       padding: 1.5rem;
       margin-bottom: 2rem;
     }
-    .import-card label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem; }
-    textarea#csv-input {
-      width: 100%; min-height: 160px; resize: vertical;
+    .form-row {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem; margin-bottom: 1rem;
+    }
+    .form-group {
+      display: flex; flex-direction: column; gap: 0.4rem;
+    }
+    .form-group label {
+      font-size: 0.78rem; font-weight: 600; color: var(--text-muted);
+    }
+    .form-group input, .form-group select, .form-group textarea {
       background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 10px; padding: 0.75rem 1rem;
-      color: var(--text); font-family: monospace; font-size: 0.8rem;
+      border-radius: 10px; padding: 0.65rem 0.9rem;
+      color: var(--text); font-family: var(--font); font-size: 0.85rem;
       outline: none; transition: border-color 0.2s;
     }
-    textarea#csv-input:focus { border-color: var(--primary); }
-    .import-actions { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--primary);
+    }
+
     .btn {
       padding: 0.65rem 1.25rem; border-radius: 10px; font-family: var(--font);
       font-size: 0.875rem; font-weight: 600; cursor: pointer; border: none;
-      display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.2s;
+      display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.15s, transform 0.1s;
     }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-primary { background: var(--primary); color: #0f0f11; }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); color: #0b0b0e; }
     .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-    #import-log {
-      margin-top: 1rem; font-size: 0.8rem; line-height: 1.6;
-      padding: 0.75rem 1rem; border-radius: 10px;
-      background: var(--surface2); border: 1px solid var(--border);
-      display: none; font-family: monospace; white-space: pre-wrap;
-      max-height: 200px; overflow-y: auto;
-    }
+    .btn-danger { background: rgba(244,63,94,0.1); color: var(--danger); border: 1px solid rgba(244,63,94,0.25); }
+    .btn-danger:hover { background: rgba(244,63,94,0.18); }
 
-    /* ── Course List ── */
-    .courses-grid { display: grid; gap: 0.75rem; }
-    .course-row {
+    /* ── Course management cards ── */
+    .courses-grid { display: grid; gap: 0.85rem; }
+    .course-item {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 12px; padding: 0.9rem 1.1rem;
+      border-radius: 14px; padding: 1.1rem 1.3rem;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+      flex-wrap: wrap; transition: border-color 0.2s;
+    }
+    .course-item:hover { border-color: rgba(255,255,255,0.1); }
+    .course-item.cancelled { opacity: 0.5; }
+    
+    .course-main-info { display: flex; flex-direction: column; gap: 4px; }
+    .course-date-time { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+    .course-name { font-size: 1rem; font-weight: 700; color: var(--text); }
+    .course-inst { font-size: 0.8rem; color: var(--text-muted); }
+
+    .course-edit-actions {
       display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
     }
-    .course-row.cancelled { opacity: 0.45; }
-    .course-date { font-size: 0.75rem; color: var(--text-muted); min-width: 100px; }
-    .course-title { font-weight: 600; flex: 1; min-width: 120px; }
-    .course-instructor { font-size: 0.8rem; color: var(--text-muted); }
-    .course-seats {
-      font-size: 0.8rem; font-weight: 600; padding: 0.2rem 0.6rem;
-      border-radius: 6px; background: var(--primary-dim); color: var(--primary);
+    .capacity-input-group {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.2rem 0.5rem;
     }
-    .course-seats.full { background: rgba(244,63,94,0.1); color: var(--danger); }
-    .status-badge {
-      font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.55rem;
-      border-radius: 99px; text-transform: uppercase; letter-spacing: 0.05em;
+    .capacity-input-group span { font-size: 0.75rem; color: var(--text-muted); }
+    .capacity-input {
+      width: 48px; background: none; border: none; color: var(--text);
+      font-size: 0.85rem; font-weight: 600; text-align: center; outline: none;
     }
-    .status-open { background: rgba(34,197,94,0.15); color: var(--success); }
-    .status-cancelled { background: rgba(244,63,94,0.1); color: var(--danger); }
+
+    /* ── Members Table/List ── */
+    .member-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 1rem 1.25rem;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 1.5rem; flex-wrap: wrap; margin-bottom: 0.65rem;
+    }
+    .member-info-col { display: flex; flex-direction: column; gap: 4px; }
+    .member-name { font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+    .member-phone { font-size: 0.78rem; color: var(--text-muted); }
+    .member-status-badge {
+      font-size: 0.68rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 6px;
+    }
+    .badge-pending { background: rgba(245,158,11,0.1); color: var(--warning); border: 1px solid rgba(245,158,11,0.2); }
+    .badge-active { background: rgba(16,185,129,0.1); color: var(--success); border: 1px solid rgba(16,185,129,0.2); }
+    
+    .member-stats-col { display: flex; gap: 1.5rem; font-size: 0.8rem; }
+    .stat-box { text-align: center; }
+    .stat-val { font-size: 1rem; font-weight: 700; color: var(--primary); }
+    .stat-label { font-size: 0.68rem; color: var(--text-muted); }
+
+    /* ── Bookings Roster ── */
+    .roster-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.5rem;
+    }
+    .roster-count {
+      font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .roster-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; }
+    .roster-item {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 0.8rem 1rem;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .roster-avatar {
+      width: 32px; height: 32px; border-radius: 50%; background: var(--primary-dim);
+      color: var(--primary); font-weight: 700; font-size: 0.85rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .roster-name { font-size: 0.85rem; font-weight: 600; }
+
+    /* Utilities */
+    .loading { text-align: center; color: var(--text-muted); padding: 2rem; font-size: 0.9rem; }
     .empty-state { text-align: center; color: var(--text-muted); padding: 3rem 1rem; font-size: 0.9rem; }
-    .loading { text-align: center; color: var(--text-muted); padding: 2rem; }
   </style>
 </head>
 <body>
@@ -193,28 +287,122 @@
     </div>
   </header>
 
+  <!-- Tabs Navigation -->
+  <div class="tabs-bar">
+    <button class="tab-btn active" data-tab="tab-courses">課表管理</button>
+    <button class="tab-btn" data-tab="tab-roster">報名名單</button>
+    <button class="tab-btn" data-tab="tab-members">會員管理</button>
+    <button class="tab-btn" data-tab="tab-purchase">購課加堂</button>
+  </div>
+
   <main>
-    <!-- CSV Import -->
-    <p class="section-title">匯入課表 CSV</p>
-    <div class="import-card">
-      <label for="csv-input">貼上 CSV 內容（格式：date,time,title,instructor,capacity）</label>
-      <textarea id="csv-input" placeholder="date,time,title,instructor,capacity
+    <!-- 1. 課表管理 Tab -->
+    <div id="tab-courses" class="tab-content active">
+      <p class="section-title">手動新增單堂課程</p>
+      <div class="card">
+        <form id="new-course-form" class="form-row">
+          <div class="form-group">
+            <label>日期</label>
+            <input type="date" id="c-date" required>
+          </div>
+          <div class="form-group">
+            <label>時間</label>
+            <input type="time" id="c-time" required>
+          </div>
+          <div class="form-group">
+            <label>課程名稱</label>
+            <input type="text" id="c-title" placeholder="如：流動瑜珈" required>
+          </div>
+          <div class="form-group">
+            <label>授課老師</label>
+            <input type="text" id="c-instructor" placeholder="如：小柔老師" required>
+          </div>
+          <div class="form-group">
+            <label>名額上限</label>
+            <input type="number" id="c-capacity" value="20" min="1" required>
+          </div>
+          <div class="form-group" style="justify-content: flex-end;">
+            <button type="submit" class="btn btn-primary" style="height: 38px;">新增課程</button>
+          </div>
+        </form>
+      </div>
+
+      <p class="section-title">匯入課表 CSV</p>
+      <div class="card">
+        <label for="csv-input" style="display:block; font-size:0.75rem; color:var(--text-muted); margin-bottom:0.5rem;">貼上 CSV 內容（格式：date,time,title,instructor,capacity）</label>
+        <textarea id="csv-input" placeholder="date,time,title,instructor,capacity
 2026-07-01,14:30,椅子瑜伽,小柔老師,20
 2026-07-02,19:30,療癒陰瑜伽,小柔老師,20"></textarea>
-      <div class="import-actions">
-        <button class="btn btn-primary" id="import-btn">
-          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
-          匯入課程
-        </button>
-        <button class="btn btn-ghost" id="clear-btn">清除</button>
+        <div class="import-actions">
+          <button class="btn btn-primary" id="import-btn">匯入課程</button>
+          <button class="btn btn-ghost" id="clear-btn">清除</button>
+        </div>
+        <div id="import-log"></div>
       </div>
-      <div id="import-log"></div>
+
+      <p class="section-title">目前所有課程</p>
+      <div id="courses-list" class="courses-grid">
+        <div class="loading">載入中...</div>
+      </div>
     </div>
 
-    <!-- Course List -->
-    <p class="section-title">目前所有課程</p>
-    <div id="courses-list" class="courses-grid">
-      <div class="loading">載入中...</div>
+    <!-- 2. 報名名單 Tab -->
+    <div id="tab-roster" class="tab-content">
+      <p class="section-title">查看課堂報名名冊</p>
+      <div class="card">
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label>請選擇課程</label>
+          <select id="roster-course-select">
+            <option value="">載入課程中...</option>
+          </select>
+        </div>
+        
+        <div class="roster-card" id="roster-list-container" style="display:none;">
+          <div class="roster-count">
+            <span style="font-weight: 700;">預約學員名冊</span>
+            <span id="roster-ratio-badge" style="background:var(--primary-dim); color:var(--primary); padding:0.25rem 0.65rem; border-radius:6px; font-weight:700;">0/20</span>
+          </div>
+          <div id="roster-list-names" class="roster-grid">
+            <!-- Names rendered dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 會員管理 Tab -->
+    <div id="tab-members" class="tab-content">
+      <p class="section-title">註冊會員名冊</p>
+      <div id="members-list">
+        <div class="loading">載入中...</div>
+      </div>
+    </div>
+
+    <!-- 4. 購課加堂 Tab -->
+    <div id="tab-purchase" class="tab-content">
+      <p class="section-title">會員購課與堂數加值</p>
+      <div class="card" style="max-width: 500px; margin: 0 auto;">
+        <form id="purchase-form" style="display:flex; flex-direction:column; gap:1.25rem;">
+          <div class="form-group">
+            <label>選擇會員</label>
+            <select id="p-member-select" required>
+              <option value="">載入會員清單中...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>購課方案</label>
+            <select id="p-plan-select" required>
+              <option value="trial">體驗方案 (加1堂 / $180)</option>
+              <option value="single">單堂購買 (加1堂 / $300)</option>
+              <option value="pack10" selected>十堂套票 (加10堂 / $2600)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>備註說明</label>
+            <textarea id="p-note" rows="3" placeholder="如：現場現金付清"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="justify-content:center; padding:0.8rem;">確認購課加堂</button>
+        </form>
+      </div>
     </div>
   </main>
 </div>
@@ -222,31 +410,47 @@
 <script>
   const ADMIN_EMAIL = 'launchdockapp@gmail.com';
 
+  // 方案設定對照常數
+  const PLANS = {
+    trial: { name: '體驗方案', credits: 1, amount: 180 },
+    single: { name: '單堂購買', credits: 1, amount: 300 },
+    pack10: { name: '十堂套票', credits: 10, amount: 2600 }
+  };
+
   // ── DOM refs ──
   const authGate = document.getElementById('auth-gate');
   const appShell = document.getElementById('app');
   const authError = document.getElementById('auth-error');
   const adminEmailDisplay = document.getElementById('admin-email-display');
-  const importBtn = document.getElementById('import-btn');
-  const clearBtn = document.getElementById('clear-btn');
-  const csvInput = document.getElementById('csv-input');
-  const importLog = document.getElementById('import-log');
+  
+  // Tabs
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+  
+  // Section List components
   const coursesList = document.getElementById('courses-list');
+  const membersList = document.getElementById('members-list');
+  const rosterCourseSelect = document.getElementById('roster-course-select');
+  const rosterListContainer = document.getElementById('roster-list-container');
+  const rosterRatioBadge = document.getElementById('roster-ratio-badge');
+  const rosterListNames = document.getElementById('roster-list-names');
+  const pMemberSelect = document.getElementById('p-member-select');
 
   // ── Auth: Listen to state changes ──
   auth.onAuthStateChanged((user) => {
     if (user && user.email === ADMIN_EMAIL) {
-      // Admin confirmed
       authGate.style.display = 'none';
-      appShell.style.display = 'block';
+      appShell.style.display = 'flex';
       adminEmailDisplay.textContent = user.email;
+      
+      // 初始化加載所有主要資料
       loadCourses();
+      loadRosterCourses();
+      loadMembers();
     } else if (user && user.email && user.email !== ADMIN_EMAIL) {
-      // Wrong Google account (not anonymous)
       showAuthError(`此帳號（${user.email}）沒有管理員權限，請換用 ${ADMIN_EMAIL} 登入。`);
       auth.signOut();
     } else {
-      // Not logged in
       authGate.style.display = 'flex';
       appShell.style.display = 'none';
     }
@@ -257,7 +461,7 @@
     authError.style.display = 'block';
   }
 
-  // ── Google Login ──
+  // ── Google Login / Logout ──
   document.getElementById('google-login-btn').addEventListener('click', () => {
     authError.style.display = 'none';
     const provider = new firebase.auth.GoogleAuthProvider();
@@ -266,12 +470,68 @@
     });
   });
 
-  // ── Logout ──
   document.getElementById('logout-btn').addEventListener('click', () => {
     auth.signOut();
   });
 
-  // ── CSV Import ──
+  // ── Tabs Switching ──
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabButtons.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+      
+      btn.classList.add('active');
+      const tabId = btn.dataset.tab;
+      document.getElementById(tabId).classList.add('active');
+    });
+  });
+
+  // ── Form Helper: Date/Time to courseId ──
+  function getCourseId(date, time) {
+    // date: 2026-07-01 -> 20260701
+    // time: 14:30 -> 1430
+    return date.replace(/-/g, '') + '_' + time.replace(/:/g, '');
+  }
+
+  // ── Tab 1: 課表管理 (新增課程與 CSV 匯入) ──
+  document.getElementById('new-course-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const date = document.getElementById('c-date').value;
+    const time = document.getElementById('c-time').value;
+    const title = document.getElementById('c-title').value.trim();
+    const instructor = document.getElementById('c-instructor').value.trim();
+    const capacity = parseInt(document.getElementById('c-capacity').value, 10);
+
+    const courseId = getCourseId(date, time);
+    const docRef = db.collection('courses').doc(courseId);
+
+    try {
+      const snap = await docRef.get();
+      if (snap.exists) {
+        alert(`新增失敗：該時段已存在課程 ID ${courseId}`);
+        return;
+      }
+      await docRef.set({
+        date, time, title, instructor, capacity,
+        enrolled: 0,
+        status: 'open'
+      });
+      alert('課程新增成功！');
+      document.getElementById('new-course-form').reset();
+      document.getElementById('c-capacity').value = '20';
+      loadCourses();
+      loadRosterCourses();
+    } catch (err) {
+      alert(`新增錯誤：${err.message}`);
+    }
+  });
+
+  // CSV Import
+  const importBtn = document.getElementById('import-btn');
+  const clearBtn = document.getElementById('clear-btn');
+  const csvInput = document.getElementById('csv-input');
+  const importLog = document.getElementById('import-log');
+
   importBtn.addEventListener('click', async () => {
     const raw = csvInput.value.trim();
     if (!raw) return;
@@ -281,7 +541,6 @@
     importLog.textContent = '🔄 開始匯入...\n';
 
     const lines = raw.split('\n').map(l => l.trim()).filter(l => l);
-    // Skip header row
     const dataLines = lines[0].startsWith('date') ? lines.slice(1) : lines;
 
     let created = 0, skipped = 0, errors = 0;
@@ -302,29 +561,19 @@
         continue;
       }
 
-      // courseId = YYYYMMDD_HHmm（移除 - 與 :）
-      const courseId = date.replace(/-/g, '') + '_' + time.replace(/:/g, '');
+      const courseId = getCourseId(date, time);
       const docRef = db.collection('courses').doc(courseId);
 
       try {
         const snap = await docRef.get();
         if (snap.exists) {
-          // Already exists — do NOT overwrite enrolled or status
-          await docRef.set({
-            date, time, title, instructor, capacity
-          }, { merge: true });
-          importLog.textContent += `⏭ 已存在，更新資訊（保留 enrolled/status）：${courseId}\n`;
+          await docRef.set({ date, time, title, instructor, capacity }, { merge: true });
+          importLog.textContent += `⏭ 更新資訊：${courseId}\n`;
           skipped++;
         } else {
-          // New course
           await docRef.set({
-            date,
-            time,
-            title,
-            instructor,
-            capacity,
-            enrolled: 0,
-            status: 'open'
+            date, time, title, instructor, capacity,
+            enrolled: 0, status: 'open'
           });
           importLog.textContent += `✓ 新增：${courseId} ${title}\n`;
           created++;
@@ -338,6 +587,7 @@
     importLog.textContent += `\n✅ 完成！新增 ${created} 筆、更新 ${skipped} 筆、錯誤 ${errors} 筆。`;
     importBtn.disabled = false;
     loadCourses();
+    loadRosterCourses();
   });
 
   clearBtn.addEventListener('click', () => {
@@ -346,7 +596,7 @@
     importLog.textContent = '';
   });
 
-  // ── Load and display all courses ──
+  // 加載所有課程 (Tab 1)
   async function loadCourses() {
     coursesList.innerHTML = '<div class="loading">載入中...</div>';
     try {
@@ -359,24 +609,29 @@
       coursesList.innerHTML = '';
       snap.forEach(doc => {
         const c = doc.data();
-        const remaining = c.capacity - (c.enrolled || 0);
-        const isFull = remaining <= 0;
+        const courseId = doc.id;
         const isCancelled = c.status === 'cancelled';
-
+        
         const dateObj = new Date(c.date + 'T' + c.time + ':00');
         const weekday = ['日','一','二','三','四','五','六'][dateObj.getDay()];
 
         const row = document.createElement('div');
-        row.className = 'course-row' + (isCancelled ? ' cancelled' : '');
+        row.className = 'course-item' + (isCancelled ? ' cancelled' : '');
         row.innerHTML = `
-          <div class="course-date">${c.date}（${weekday}）${c.time}</div>
-          <div class="course-title">${c.title}</div>
-          <div class="course-instructor">👩‍🏫 ${c.instructor}</div>
-          <div class="course-seats ${isFull ? 'full' : ''}">
-            ${isFull ? '額滿' : `剩 ${remaining} 位`} / ${c.capacity}
+          <div class="course-main-info">
+            <div class="course-date-time">${c.date}（${weekday}）${c.time}</div>
+            <div class="course-name">${c.title}</div>
+            <div class="course-inst">👩‍🏫 ${c.instructor} (已報名: ${c.enrolled || 0} 位)</div>
           </div>
-          <div class="status-badge ${isCancelled ? 'status-cancelled' : 'status-open'}">
-            ${isCancelled ? '停課' : '開放'}
+          <div class="course-edit-actions">
+            <div class="capacity-input-group">
+              <span>名額:</span>
+              <input type="number" class="capacity-input" data-id="${courseId}" value="${c.capacity}" min="1">
+              <button class="btn btn-ghost" style="padding: 0.2rem 0.4rem; font-size: 0.7rem;" onclick="updateCapacity('${courseId}')">改</button>
+            </div>
+            <button class="btn ${isCancelled ? 'btn-primary' : 'btn-danger'}" style="font-size: 0.75rem; padding: 0.4rem 0.8rem;" onclick="toggleCourseStatus('${courseId}', '${c.status}')">
+              ${isCancelled ? '重開課' : '停課'}
+            </button>
           </div>
         `;
         coursesList.appendChild(row);
@@ -385,6 +640,261 @@
       coursesList.innerHTML = `<div class="empty-state" style="color:var(--danger)">載入失敗：${e.message}</div>`;
     }
   }
+
+  // 調整開課容量 capacity
+  window.updateCapacity = async function(courseId) {
+    const input = document.querySelector(`.capacity-input[data-id="${courseId}"]`);
+    const val = parseInt(input.value, 10);
+    if (isNaN(val) || val < 1) {
+      alert('請輸入有效的人數！');
+      return;
+    }
+
+    try {
+      await db.collection('courses').doc(courseId).update({ capacity: val });
+      alert('名額上限已更新');
+      loadCourses();
+      loadRosterCourses();
+    } catch (e) {
+      alert(`更新失敗: ${e.message}`);
+    }
+  };
+
+  // 停課 / 啟用切換
+  window.toggleCourseStatus = async function(courseId, currentStatus) {
+    const nextStatus = currentStatus === 'open' ? 'cancelled' : 'open';
+    const actionLabel = nextStatus === 'open' ? '重新開課' : '停課';
+    if (!confirm(`確定要將此課程設為 [${actionLabel}] 嗎？`)) return;
+
+    try {
+      await db.collection('courses').doc(courseId).update({ status: nextStatus });
+      loadCourses();
+      loadRosterCourses();
+    } catch (e) {
+      alert(`更新狀態失敗: ${e.message}`);
+    }
+  };
+
+
+  // ── Tab 2: 報名名單 ──
+  async function loadRosterCourses() {
+    rosterCourseSelect.innerHTML = '<option value="">載入中...</option>';
+    try {
+      const snap = await db.collection('courses').orderBy('date').orderBy('time').get();
+      if (snap.empty) {
+        rosterCourseSelect.innerHTML = '<option value="">目前無任何課程</option>';
+        return;
+      }
+      rosterCourseSelect.innerHTML = '<option value="">-- 請選擇一堂課程 --</option>';
+      snap.forEach(doc => {
+        const c = doc.data();
+        const weekday = ['日','一','二','三','四','五','六'][new Date(c.date + 'T' + c.time + ':00').getDay()];
+        rosterCourseSelect.innerHTML += `<option value="${doc.id}">${c.date} (${weekday}) ${c.time} - ${c.title} (👩‍🏫 ${c.instructor})</option>`;
+      });
+    } catch (e) {
+      rosterCourseSelect.innerHTML = `<option value="">載入失敗: ${e.message}</option>`;
+    }
+  }
+
+  rosterCourseSelect.addEventListener('change', async () => {
+    const courseId = rosterCourseSelect.value;
+    if (!courseId) {
+      rosterListContainer.style.display = 'none';
+      return;
+    }
+
+    rosterListNames.innerHTML = '<div class="loading">查詢名單中...</div>';
+    rosterListContainer.style.display = 'block';
+
+    try {
+      // 1. 取得課程名額上限資訊
+      const courseSnap = await db.collection('courses').doc(courseId).get();
+      const courseData = courseSnap.exists ? courseSnap.data() : { capacity: 20, enrolled: 0 };
+      
+      // 2. 查詢 bookings
+      const bookingsSnap = await db.collection('bookings')
+        .where('courseId', '==', courseId)
+        .where('status', '==', 'booked')
+        .orderBy('createdAt', 'asc')
+        .get();
+
+      rosterRatioBadge.textContent = `${bookingsSnap.size} / ${courseData.capacity}`;
+
+      if (bookingsSnap.empty) {
+        rosterListNames.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">這堂課目前尚無預約。</div>';
+        return;
+      }
+
+      rosterListNames.innerHTML = '';
+      bookingsSnap.forEach((doc, idx) => {
+        const b = doc.data();
+        const item = document.createElement('div');
+        item.className = 'roster-item';
+        item.innerHTML = `
+          <div class="roster-avatar">${idx + 1}</div>
+          <div class="roster-name">${b.name || '未填姓名'}</div>
+        `;
+        rosterListNames.appendChild(item);
+      });
+
+    } catch (e) {
+      rosterListNames.innerHTML = `<div class="empty-state" style="color:var(--danger); grid-column: 1/-1;">載入失敗: ${e.message}</div>`;
+    }
+  });
+
+
+  // ── Tab 3: 會員管理 ──
+  async function loadMembers() {
+    membersList.innerHTML = '<div class="loading">載入會員中...</div>';
+    pMemberSelect.innerHTML = '<option value="">載入會員清單中...</option>';
+
+    try {
+      const snap = await db.collection('members').orderBy('createdAt', 'desc').get();
+      if (snap.empty) {
+        membersList.innerHTML = '<div class="empty-state">尚無會員註冊資料。</div>';
+        pMemberSelect.innerHTML = '<option value="">尚無有效會員可加堂</option>';
+        return;
+      }
+
+      membersList.innerHTML = '';
+      pMemberSelect.innerHTML = '<option value="">-- 請選擇購課會員 --</option>';
+
+      snap.forEach(doc => {
+        const m = doc.data();
+        const userId = doc.id;
+        const isPending = m.status === 'pending';
+        
+        let expiryStr = '未設定';
+        if (m.expiresAt) {
+          const d = m.expiresAt.toDate();
+          expiryStr = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+        }
+
+        // 渲染會員列表
+        const item = document.createElement('div');
+        item.className = 'member-item';
+        item.innerHTML = `
+          <div class="member-info-col">
+            <div class="member-name">
+              ${m.name || m.displayName} 
+              <span class="member-status-badge ${isPending ? 'badge-pending' : 'badge-active'}">${isPending ? '審核中' : '已開通'}</span>
+            </div>
+            <div class="member-phone">📞 ${m.phone || '無電話'} | LINE: ${m.displayName || '未綁'}</div>
+          </div>
+          <div class="member-stats-col">
+            <div class="stat-box">
+              <div class="stat-val">${m.credits ?? 0}</div>
+              <div class="stat-label">剩餘堂數</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-val" style="font-size: 0.85rem; height: 20px; line-height: 20px;">${expiryStr}</div>
+              <div class="stat-label">到期日</div>
+            </div>
+          </div>
+          <div>
+            ${isPending 
+              ? `<button class="btn btn-primary" style="font-size:0.75rem; padding:0.4rem 0.8rem;" onclick="activateMember('${userId}')">核對開通</button>` 
+              : `<button class="btn btn-ghost" style="font-size:0.75rem; padding:0.4rem 0.8rem;" disabled>已核對</button>`
+            }
+          </div>
+        `;
+        membersList.appendChild(item);
+
+        // 同步填入 Tab 4 購課的會員下拉選單 (限已開通會員，或是全部會員皆可購課開通)
+        pMemberSelect.innerHTML += `<option value="${userId}">${m.name} (${m.phone || '無電話'})</option>`;
+      });
+
+    } catch (e) {
+      membersList.innerHTML = `<div class="empty-state" style="color:var(--danger)">載入失敗: ${e.message}</div>`;
+    }
+  }
+
+  // 核對開通會員
+  window.activateMember = async function(userId) {
+    if (!confirm('確認核對此會員資訊並開通使用權限嗎？')) return;
+
+    try {
+      const defaultExpiry = new Date();
+      defaultExpiry.setDate(defaultExpiry.getDate() + 90); // 預設 90 天到期
+
+      await db.collection('members').doc(userId).update({
+        status: 'active',
+        expiresAt: firebase.firestore.Timestamp.fromDate(defaultExpiry)
+      });
+      alert('會員已成功開通！預設贈予 90 天到期效期。');
+      loadMembers();
+    } catch (e) {
+      alert(`開通失敗: ${e.message}`);
+    }
+  };
+
+
+  // ── Tab 4: 購課加堂 ──
+  document.getElementById('purchase-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const userId = document.getElementById('p-member-select').value;
+    const planKey = document.getElementById('p-plan-select').value;
+    const note = document.getElementById('p-note').value.trim();
+
+    if (!userId || !planKey) {
+      alert('請先選擇會員與購課方案！');
+      return;
+    }
+
+    const plan = PLANS[planKey];
+    const memberRef = db.collection('members').doc(userId);
+    const purchaseRef = db.collection('purchases').doc(); // 自動 ID
+
+    try {
+      await db.runTransaction(async (tx) => {
+        const memberSnap = await tx.get(memberRef);
+        if (!memberSnap.exists) {
+          throw new Error('找不到該會員資料，無法進行加堂');
+        }
+
+        const m = memberSnap.data();
+        
+        // 計算到期日：max(現有到期日, 今天 + 90天)
+        const now = new Date();
+        const defaultExpiry = new Date();
+        defaultExpiry.setDate(defaultExpiry.getDate() + 90); // 90 天效期
+
+        let finalExpiry = defaultExpiry;
+        if (m.expiresAt) {
+          const currentExpiry = m.expiresAt.toDate();
+          if (currentExpiry > now) {
+            // 現有到期日還在未來 -> 在現有到期日上加 90 天
+            // 或是照 rules 規格：max(現有到期日, 今天 + 90天) -> 這裡用 max 以免扣除先前已買天數
+            finalExpiry = currentExpiry > defaultExpiry ? currentExpiry : defaultExpiry;
+          }
+        }
+
+        // 1. 寫入 purchases 購課記錄
+        tx.set(purchaseRef, {
+          lineUserId: userId,
+          plan: planKey,
+          credits: plan.credits,
+          amount: plan.amount,
+          purchasedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          expiresAt: firebase.firestore.Timestamp.fromDate(finalExpiry),
+          note: note
+        });
+
+        // 2. 更新 members
+        tx.update(memberRef, {
+          credits: (m.credits || 0) + plan.credits,
+          expiresAt: firebase.firestore.Timestamp.fromDate(finalExpiry),
+          status: 'active'
+        });
+      });
+
+      alert(`購課加值成功！\n方案：${plan.name}\n加堂：+${plan.credits} 堂`);
+      document.getElementById('purchase-form').reset();
+      loadMembers(); // 重新加載會員列表刷新堂數
+    } catch (err) {
+      alert(`購課失敗：${err.message}`);
+    }
+  });
 </script>
 </body>
 </html>

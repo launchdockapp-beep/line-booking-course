@@ -40,8 +40,14 @@ async function checkMember() {
     const snap = await db.collection('members').doc(lineUserId).get();
     if (snap.exists) {
       renderMemberInfo(snap.data());
+      // L5: 載入預約清單
+      if (typeof loadMyBookings === 'function') {
+        loadMyBookings();
+      }
     } else {
       renderRegisterForm();
+      const area = document.getElementById('my-bookings-area');
+      if (area) area.style.display = 'none';
     }
   } catch (e) {
     renderMemberSection('error', `查詢失敗：${e.message}`);

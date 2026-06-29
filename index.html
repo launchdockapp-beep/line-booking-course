@@ -350,6 +350,39 @@
     }
     .book-btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
+    /* ── My Bookings Section ── */
+    .my-bookings-section {
+      width: 100%;
+      max-width: 480px;
+      margin-top: 1.5rem;
+    }
+    .my-bookings-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .my-bookings-title::before {
+      content: '';
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: var(--secondary);
+      border-radius: 2px;
+    }
+    .cancel-btn {
+      font-size: 0.72rem; font-weight: 600; padding: 0.25rem 0.7rem;
+      background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.25);
+      color: var(--secondary); border-radius: 8px; cursor: pointer;
+      font-family: var(--font-sans); transition: opacity 0.15s;
+    }
+    .cancel-btn:disabled { opacity: 0.4; cursor: not-allowed; border-color: rgba(255,255,255,0.05); color: var(--text-muted); background: rgba(255,255,255,0.02); }
+
     /* ── Member Section ── */
     #member-section { display: none; margin-bottom: 1.25rem; }
     .member-card {
@@ -462,6 +495,12 @@
         <div id="test-result-detail" style="color: var(--text-muted); font-family: monospace; word-break: break-all;"></div>
       </div>
     </div>
+  </div>
+
+  <!-- ── My Bookings Section ── -->
+  <div class="my-bookings-section" id="my-bookings-area" style="display:none;">
+    <div class="my-bookings-title">我的預約</div>
+    <div id="my-bookings-list"><div class="schedule-loading">🔄 載入預約中...</div></div>
   </div>
 
   <!-- ── Weekly Schedule Section ── -->
@@ -667,6 +706,110 @@
         });
       } catch (e) {
         list.innerHTML = `<div class="schedule-empty" style="color:var(--secondary)">載入失敗：${e.message}</div>`;
+      }
+    }
+
+    // ── Load My Bookings ──
+    async function loadMyBookings() {
+      const area = document.getElementById('my-bookings-area');
+      const list = document.getElementById('my-bookings-list');
+      if (!lineUserId) {
+        area.style.display = 'none';
+        return;
+      }
+
+      try {
+        // 取得該使用者的 booked 預約
+        const bookingsSnap = await db.collection('bookings')
+          .where('lineUserId', '==', lineUserId)
+          .where('status', '==', 'booked')
+          .orderBy('createdAt', 'desc')
+          .get();
+
+        if (bookingsSnap.empty) {
+          list.innerHTML = '<div class="schedule-empty">📅 目前沒有預約的課</div>';
+          area.style.display = 'block';
+          return;
+        }
+
+        // 載入預約關聯的課程詳細資訊
+        const cardsHTML = [];
+        const now = new Date();
+
+        for (const doc of bookingsSnap.docs) {
+          const b = doc.data();
+          const courseId = b.courseId;
+          const courseSnap = await db.collection('courses').doc(courseId).get();
+          
+          if (!courseSnap.exists) continue;
+          const c = courseSnap.data();
+          
+          // 檢查是否小於 2 小時（不可取消）
+          const courseDateTime = new Date(`${c.date}T${c.time}:00`);
+          const timeDiffHours = (courseDateTime - now) / (1000 * 60 * 60);
+          const isTooLate = timeDiffHours < 2;
+
+          const dateObj = new Date(c.date + 'T00:00:00');
+          const weekday = WEEKDAYS[dateObj.getDay()];
+
+          cardsHTML.push(`
+            <div class="course-card" data-booking-course-id="${courseId}">
+              <div class="course-time-block">
+                <div class="time">${c.time}</div>
+                <div class="weekday">${c.date.slice(5).replace('-','/')} 週${weekday}</div>
+              </div>
+              <div class="course-info">
+                <div class="name">${c.title}</div>
+                <div class="instructor">👩‍🏫 ${c.instructor}</div>
+              </div>
+              <div>
+                <button class="cancel-btn" data-id="${courseId}" data-title="${c.title}" ${isTooLate ? 'disabled title="課前 2 小時內不可取消"' : ''}>取消</button>
+              </div>
+            </div>
+          `);
+        }
+
+        if (cardsHTML.length === 0) {
+          list.innerHTML = '<div class="schedule-empty">📅 目前沒有預約的課</div>';
+        } else {
+          list.innerHTML = cardsHTML.join('');
+          
+          // 綁定取消按鈕 event
+          list.querySelectorAll('.cancel-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+              const id = btn.dataset.id;
+              const title = btn.dataset.title;
+              if (!confirm(`確認取消「${title}」的預約？\n將會退回 1 堂數。`)) return;
+
+              btn.disabled = true;
+              btn.textContent = '取消中…';
+
+              try {
+                // 直接使用 booking.js 提供的全域 cancelBooking
+                const result = await cancelBooking(id, lineUserId);
+                if (result.ok) {
+                  alert('已退回 1 堂');
+                  // 重新整理
+                  await loadMyBookings();
+                  await loadSchedule();
+                  if (typeof checkMember === 'function') {
+                    await checkMember();
+                  }
+                }
+              } catch (e) {
+                alert(`取消失敗：${e.message}`);
+                btn.disabled = false;
+                btn.textContent = '取消';
+              }
+            });
+          });
+        }
+        area.style.display = 'block';
+
+      } catch (e) {
+        console.error('loadMyBookings error:', e);
+        list.innerHTML = `<div class="schedule-empty" style="color:var(--secondary)">載入失敗：${e.message}</div>`;
+        area.style.display = 'block';
       }
     }
 

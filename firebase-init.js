@@ -12,8 +12,8 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-const db = firebase.firestore();
 const auth = firebase.auth();
+
 
 // Event-driven authentication using Promise to prevent race conditions (anti-pattern: setTimeout)
 const authReady = new Promise((resolve, reject) => {
